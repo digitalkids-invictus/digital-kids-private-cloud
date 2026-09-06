@@ -2,14 +2,13 @@ resource "render_postgres" "db" {
   name          = "persistent-postgres"
   plan          = "free"
   region        = "oregon"
-  database_name = "app_db_lvqw"
+  database_name = "app_db_lvqw_ybt6" # Matches the exact database name in tfstate
   database_user = "app_user"
   version       = "15"
 
   lifecycle {
-    ignore_changes = [
-      database_name,
-    ]
+    prevent_destroy = true
+    ignore_changes  = [database_name]
   }
 }
 
@@ -17,11 +16,6 @@ resource "render_web_service" "app" {
   name   = "docker-web-app"
   plan   = "free"
   region = "oregon"
-
-  # Obligatorio para planes free: desactiva explícitamente el modo mantenimiento para que el proveedor no lo mande a la API
-  maintenance_mode = {
-    enabled = false
-  }
 
   runtime_source = {
     docker = {
@@ -37,12 +31,6 @@ resource "render_web_service" "app" {
     "DATABASE_URL" = {
       value = render_postgres.db.connection_info.external_connection_string
     }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      maintenance_mode,
-    ]
   }
 }
 
