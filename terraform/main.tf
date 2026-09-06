@@ -2,7 +2,7 @@ resource "render_postgres" "db" {
   name          = "persistent-postgres"
   plan          = "free"
   region        = "oregon"
-  database_name = "app_db_lvqw_ybt6" # Matches the exact database name in tfstate
+  database_name = "app_db_lvqw_ybt6"
   database_user = "app_user"
   version       = "15"
 
@@ -31,6 +31,12 @@ resource "render_web_service" "app" {
     "DATABASE_URL" = {
       value = render_postgres.db.connection_info.external_connection_string
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      maintenance_mode_enabled
+    ]
   }
 }
 
