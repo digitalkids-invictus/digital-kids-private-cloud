@@ -47,9 +47,22 @@ jobs:
 
       - name: Execute SQL Script
         working-directory: ./terraform
-        env:
-          TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
-          TF_VAR_render_owner_id: ${{ secrets.RENDER_OWNER_ID }}
         run: |
+          echo "Esperando a que la base de datos esté completamente lista..."
+          sleep 20
+          
           DB_URL=$(terraform output -raw postgres_connection_string)
-          psql "$DB_URL" -f ../init.sql
+          
+          # Intentamos ejecutar el script con reintentos y asegurando el parámetro SSL
+          for i in {1..5}; do
+            echo "Intento $i de conexión a la base de datos..."
+            if psql "$DB_URL" -v ON_ERROR_STOP=1 -f ../init.sql; then
+              echo "¡Script SQL ejecutado con éxito!"
+              exit 0
+            fi
+            echo "La base de datos aún no responde, reintentando en 10 segundos..."
+            sleep 10
+          done
+          
+          echo "Error: No se pudo conectar a la base de datos tras varios intentos."
+          exit 1
