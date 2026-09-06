@@ -16,10 +16,9 @@ resource "render_web_service" "app" {
     native_runtime = {
       auto_deploy   = true
       build_command = ""
+      start_command = "" 
       runtime       = "docker"
       
-      # FIX: Se requiere la URL del repositorio y la rama 
-      # para que Render sepa de dónde obtener el Dockerfile
       repo_url      = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
       branch        = "main"
     }
