@@ -31,23 +31,26 @@ jobs:
           TF_VAR_render_owner_id: ${{ secrets.RENDER_OWNER_ID }}
         run: |
           if [ ! -f "terraform.tfstate" ]; then
-            echo "Buscando recursos existentes en Render para importar..."
+            echo "Buscando recursos existentes en Render con jq..."
             
-            # Consultar recursos en la API de Render
             RESPONSE=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services?limit=20")
             
-            # Extraer ID de la base de datos si existe el nombre "persistent-postgres"
-            DB_ID=$(echo "$RESPONSE" | grep -B 2 -A 5 "persistent-postgres" | grep '"id"' | head -n 1 | cut -d'"' -f4)
-            if [ -n "$DB_ID" ]; then
-              echo "Base de datos encontrada en Render con ID: $DB_ID. Importando..."
-              terraform import render_postgres.db "$DB_ID" || true
+            # Extraer IDs usando jq de manera limpia y precisa
+            DB_ID=$(echo "$RESPONSE" | jq -r '.[] | select(.service.name == "persistent-postgres") | .service.id')
+            APP_ID=$(echo "$RESPONSE" | jq -r '.[] | select(.service.name == "docker-web-app") | .service.id')
+            
+            if [ -n "$DB_ID" ] && [ "$DB_ID" != "null" ]; then
+              echo "Base de datos encontrada ($DB_ID). Importando a Terraform..."
+              terraform import render_postgres.db "$DB_ID"
+            else
+              echo "No se encontró la base de datos en Render, se creará una nueva."
             fi
             
-            # Extraer ID del servicio web si existe el nombre "docker-web-app"
-            APP_ID=$(echo "$RESPONSE" | grep -B 2 -A 5 "docker-web-app" | grep '"id"' | head -n 1 | cut -d'"' -f4)
-            if [ -n "$APP_ID" ]; then
-              echo "Servicio web encontrado en Render con ID: $APP_ID. Importando..."
-              terraform import render_web_service.app "$APP_ID" || true
+            if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ]; then
+              echo "Servicio web encontrado ($APP_ID). Importando a Terraform..."
+              terraform import render_web_service.app "$APP_ID"
+            else
+              echo "No se encontró el servicio web en Render, se creará uno nuevo."
             fi
           fi
 
