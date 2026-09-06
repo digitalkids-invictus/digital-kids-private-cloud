@@ -2,7 +2,7 @@ resource "render_postgres" "db" {
   name          = "persistent-postgres"
   plan          = "free"
   region        = "oregon"
-  database_name = "app_db"
+  database_name = "app_db_lvqw" # <-- Debe coincidir exactamente con el existente para evitar que se destruya
   database_user = "app_user"
   version       = "15"
 }
@@ -14,9 +14,11 @@ resource "render_web_service" "app" {
 
   runtime_source = {
     docker = {
-      auto_deploy = true
-      repo_url    = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
-      branch      = "main"
+      auto_deploy     = true
+      repo_url        = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
+      branch          = "main"
+      dockerfile_path = "./Dockerfile"
+      context         = "."
     }
   }
 
