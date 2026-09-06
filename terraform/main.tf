@@ -2,9 +2,13 @@ resource "render_postgres" "db" {
   name          = "persistent-postgres"
   plan          = "free"
   region        = "oregon"
-  database_name = "app_db_lvqw" # <-- Debe coincidir exactamente con el existente para evitar que se destruya
+  database_name = "app_db_lvqw"
   database_user = "app_user"
   version       = "15"
+
+  lifecycle {
+    prevent_destroy = true # Evita que Terraform vuelva a borrar la base de datos
+  }
 }
 
 resource "render_web_service" "app" {
@@ -26,6 +30,12 @@ resource "render_web_service" "app" {
     "DATABASE_URL" = {
       value = render_postgres.db.connection_info.external_connection_string
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      maintenance_mode, # Evita que intente configurar maintenance_mode en plan free
+    ]
   }
 }
 
