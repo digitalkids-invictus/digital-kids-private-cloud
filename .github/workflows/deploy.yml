@@ -23,24 +23,32 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
-      - name: Import Existing Resources if State is Missing
+      - name: Import Existing Resources Automatically
         working-directory: ./terraform
         env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
           TF_VAR_render_owner_id: ${{ secrets.RENDER_OWNER_ID }}
         run: |
-          # Si el archivo tfstate no existe en el repo, intentamos importar lo que ya está creado en Render
           if [ ! -f "terraform.tfstate" ]; then
-            echo "El archivo tfstate no existe. Intentando importar recursos existentes..."
+            echo "Buscando recursos existentes en Render para importar..."
             
-            # NOTA: Reemplaza estos IDs con los reales de tus recursos en Render (los ves en la URL de tu dashboard)
-            # Ejemplo: terraform import render_postgres.db srv-xxxxxxxxxxxx
-            # terraform import render_web_service.app srv-yyyyyyyyyyyy
+            # Consultar recursos en la API de Render
+            RESPONSE=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services?limit=20")
             
-            # Si prefieres que Terraform busque por nombre o prefieres asignarlos, 
-            # asegurate de tener los IDs de Render o usa terraform import con el ID del servicio/bd de Render:
-            # terraform import render_postgres.db <ID_DE_LA_BD_EN_RENDER> || true
-            # terraform import render_web_service.app <ID_DEL_SERVICIO_EN_RENDER> || true
+            # Extraer ID de la base de datos si existe el nombre "persistent-postgres"
+            DB_ID=$(echo "$RESPONSE" | grep -B 2 -A 5 "persistent-postgres" | grep '"id"' | head -n 1 | cut -d'"' -f4)
+            if [ -n "$DB_ID" ]; then
+              echo "Base de datos encontrada en Render con ID: $DB_ID. Importando..."
+              terraform import render_postgres.db "$DB_ID" || true
+            fi
+            
+            # Extraer ID del servicio web si existe el nombre "docker-web-app"
+            APP_ID=$(echo "$RESPONSE" | grep -B 2 -A 5 "docker-web-app" | grep '"id"' | head -n 1 | cut -d'"' -f4)
+            if [ -n "$APP_ID" ]; then
+              echo "Servicio web encontrado en Render con ID: $APP_ID. Importando..."
+              terraform import render_web_service.app "$APP_ID" || true
+            fi
           fi
 
       - name: Terraform Apply
