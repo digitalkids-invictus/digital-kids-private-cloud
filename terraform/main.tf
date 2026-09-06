@@ -13,14 +13,10 @@ resource "render_web_service" "app" {
   region = "oregon"
 
   runtime_source = {
-    native_runtime = {
-      auto_deploy   = true
-      build_command = ""
-      start_command = "" 
-      runtime       = "docker"
-      
-      repo_url      = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
-      branch        = "main"
+    docker = {
+      auto_deploy = true
+      repo_url    = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
+      branch      = "main"
     }
   }
 
