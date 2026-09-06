@@ -35,7 +35,8 @@ resource "render_web_service" "app" {
 
   lifecycle {
     ignore_changes = [
-      maintenance_mode_enabled
+      env_vars,
+      runtime_source
     ]
   }
 }
