@@ -8,7 +8,7 @@ resource "render_postgres" "db" {
 
   lifecycle {
     ignore_changes = [
-      database_name, # Evita que intente destruir la BD si Render le cambia el sufijo interno
+      database_name,
     ]
   }
 }
@@ -17,6 +17,11 @@ resource "render_web_service" "app" {
   name   = "docker-web-app"
   plan   = "free"
   region = "oregon"
+
+  # Obligatorio para planes free: desactiva explícitamente el modo mantenimiento para que el proveedor no lo mande a la API
+  maintenance_mode = {
+    enabled = false
+  }
 
   runtime_source = {
     docker = {
@@ -36,7 +41,7 @@ resource "render_web_service" "app" {
 
   lifecycle {
     ignore_changes = [
-      maintenance_mode, # Evita el error del plan free
+      maintenance_mode,
     ]
   }
 }
