@@ -7,7 +7,9 @@ resource "render_postgres" "db" {
   version       = "15"
 
   lifecycle {
-    prevent_destroy = true # Evita que Terraform vuelva a borrar la base de datos
+    ignore_changes = [
+      database_name, # Evita que intente destruir la BD si Render le cambia el sufijo interno
+    ]
   }
 }
 
@@ -34,7 +36,7 @@ resource "render_web_service" "app" {
 
   lifecycle {
     ignore_changes = [
-      maintenance_mode, # Evita que intente configurar maintenance_mode en plan free
+      maintenance_mode, # Evita el error del plan free
     ]
   }
 }
