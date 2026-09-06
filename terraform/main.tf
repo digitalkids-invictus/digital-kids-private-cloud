@@ -47,7 +47,7 @@ resource "render_web_service" "app" {
       
       # FIX: Se requiere la URL del repositorio y la rama 
       # para que Render sepa de dónde obtener el Dockerfile
-      repo_url      = "https://github.com/TU_USUARIO/TU_REPOSITORIO"
+      repo_url      = "https://github.com/digitalkids-invictus/digital-kids-private-cloud"
       branch        = "main"
     }
   }
